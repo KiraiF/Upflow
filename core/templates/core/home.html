@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Reddit Clone</title>
+</head>
+<body>
+  <h1>Reddit Clone 🧠</h1>
+  <hr>
+  {% for post in posts %}
+    <div style="margin-bottom: 20px;">
+      <h2>{{ post.title }}</h2>
+      <p><strong>Community:</strong> {{ post.community.name }}</p>
+      <p><strong>Posted by:</strong> <a href="{% url 'profile' post.user.username %}">{{ post.user.username }}</a> on {{ post.created_at }}</p>
+      <p><strong>Body:</strong> {{ post.body }}</p>
+      <p><strong>Karma:</strong> {{ post.karma }}</p>
+      <form method="post" action="{% url 'upvote_post' post.id %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit">⬆ Upvote</button>
+      </form>
+      <form method="post" action="{% url 'downvote_post' post.id %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit">⬆ Downvote</button>
+      </form>
+    </div>
+  {% empty %}
+    <p>No posts yet. 😢</p>
+  {% endfor %}
+</body>
+</html>

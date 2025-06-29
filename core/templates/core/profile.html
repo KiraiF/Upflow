@@ -1,0 +1,14 @@
+<h1>{{ profile_user.username }}'s Profile</h1>
+
+{% if posts %}
+  <h2>Posts by {{ profile_user.username }}:</h2>
+  {% for post in posts %}
+    <div style="margin-bottom: 20px;">
+      <h3>{{ post.title }}</h3>
+      <p>{{ post.body }}</p>
+      <p><small>Posted in {{ post.community.name }} on {{ post.created_at }}</small></p>
+    </div>
+  {% endfor %}
+{% else %}
+  <p>This user hasn't posted anything yet.</p>
+{% endif %}
