@@ -1,0 +1,5 @@
+.env
+core/__pycache__
+upflow/__pycache__
+templatetags/__pycache__
+*.ps1

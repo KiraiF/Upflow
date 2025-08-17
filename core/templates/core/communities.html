@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  {% load post_tags %}
+  <meta charset="UTF-8">
+  <title>Upflow - Communities</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+  <style>
+    body {
+      background-color: #f8f9fa;
+      overflow-y: scroll;
+      margin: 0;
+    }
+
+    .post-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      background: #fff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .post-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+    }
+
+    .community-wrapper {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      padding: 1rem;
+      box-sizing: border-box;
+    }
+
+    .community-card {
+      border: 1px solid #dee2e6;
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      background: white;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      transition: transform 0.2s ease-in-out;
+      height: 100%;
+    }
+
+    .community-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .navbar-brand {
+      font-weight: bold;
+    }
+
+    .fade-out {
+      opacity: 1;
+      transition: opacity 1s ease-out;
+    }
+
+    .fade-out.hide {
+      opacity: 0;
+    }
+
+    h2 {
+      margin-bottom: 1rem;
+    }
+
+    .btn-sm {
+      transition: all 0.2s ease;
+    }
+
+    .btn-sm:hover {
+      transform: translateY(-1px);
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .page-header .title-block h2 {
+      margin: 0;
+      line-height: 1.2;
+    }
+
+    .page-header .title-block p {
+      margin: 0;
+      color: #6c757d;
+    }
+
+    .page-header .btn {
+      margin: 0 !important;
+    }
+
+    /* prevent vertical nudge */
+    @media (max-width:576px) {
+      .page-header {
+        flex-wrap: wrap;
+      }
+
+      .page-header .cta {
+        width: 100%;
+        display: flex;
+        justify-content: flex-end;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="{% url 'home' %}">Upflow</a>
+      <div class="d-flex align-items-center gap-2">
+        <a class="navbar-brand" href="{% url 'communities' %}">Communities</a>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        {% if user.is_authenticated %}
+        <span class="text-white fw-semibold">Hello, {{ user.username }}</span>
+        <form method="post" action="{% url 'logout' %}">
+          {% csrf_token %}
+          <button class="btn btn-outline-light btn-sm">Logout</button>
+        </form>
+        {% else %}
+        <button onclick="loadModal('login')" type="button" class="btn btn-outline-light btn-sm me-2">
+          Log In
+        </button>
+
+        <button onclick="loadModal('signup')" type="button" class="btn btn-outline-light btn-sm me-2">
+          Sign Up
+        </button>
+        {% endif %}
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mt-4">
+
+    {% if all_communities %}
+    <div class="page-header">
+      <div class="title-block">
+        <h2 class="mb-0">All Communities</h2>
+        <p class="text-muted">Browse and join communities</p>
+      </div>
+      <div class="cta">
+        <button onclick="loadModal('community')" type="button" class="btn btn-primary btn-sm">
+          + New Community
+        </button>
+      </div>
+    </div>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+      {% for c in all_communities %}
+      <div class="col">
+        <div class="community-card h-100 p-4">
+          <h5 class="mb-2">
+            <a href="{% url 'communities' c.name %}" class="text-decoration-none">r/{{ c.name }}</a>
+          </h5>
+          <p class="text-muted mb-3">{{ c.description|truncatechars:150 }}</p>
+          <span class="badge bg-secondary">{{ c.posts.count }} posts</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% elif single_community %}
+    <div class="page-header">
+      <div class="title-block">
+        <h2 class="mb-0">r/{{ single_community.name }}</h2>
+        <p class="text-muted">{{ single_community.description }}</p>
+      </div>
+      <div class="cta">
+        <button onclick="loadModal('post')" type="button" class="btn btn-primary btn-sm">
+          + New Post
+        </button>
+      </div>
+    </div>
+
+    {% if posts %}
+    <div class="row row-cols-1 row-cols-md-2 g-4">
+      {% for post in posts %}
+      <div class="col">
+        <div class="post-card h-100">
+          {% render_post post %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center text-muted mt-5">
+      <h4>No posts yet in this community...</h4>
+      <p>
+        Why not be the first to
+        <a href="javascript:void(0)" onclick="loadModal('post')" class="text-decoration-none text-primary fw-semibold">
+          post
+        </a>?
+      </p>
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="text-center text-muted mt-5">
+      <h4>No communities yet.</h4>
+      <p>
+        Why not
+        <a href="javascript:void(0)" onclick="loadModal('community')"
+          class="text-decoration-none text-primary fw-semibold">
+          create one
+        </a>?
+      </p>
+    </div>
+    {% endif %}
+
+  </div>
+
+
+  <div id="modal-container"></div>
+  <script>
+    function loadModal(type) {
+      let url = '/';
+      if (type === 'community') url += 'create_community';
+      else if (type === 'login') url += 'login';
+      else if (type === 'signup') url += 'signup';
+      else if (type === 'post') url += 'post/new?community={{ single_community.id }}';
+
+      fetch(url)
+        .then(response => response.text())
+        .then(html => {
+          document.getElementById('modal-container').innerHTML = html;
+          let modalId = type === 'community' ? 'communityModal' : type === 'login' ? 'loginModal' : type === 'signup' ? 'signupModal' : 'createPostModal';
+          const modalEl = document.getElementById(modalId);
+          if (modalEl) {
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+          }
+        })
+        .catch(error => console.log('Error loading modal:', error));
+    }
+  </script>
+</body>
+
+</html>

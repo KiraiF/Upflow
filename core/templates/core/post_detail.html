@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    {% load comment_tags %}
+    <meta charset="UTF-8">
+    <title>{{ post.title }} - Upflow</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #f8f9fa;
+            overflow-y: scroll;
+            /* always reserve scrollbar to prevent layout shift */
+            margin: 0;
+        }
+
+        /* Wrapper for horizontal centering and minor width shifts */
+        .post-wrapper {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+
+        /* Main post container */
+        .post-container {
+            max-width: 800px;
+            width: 100%;
+            background-color: #fff;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+            /* smooth minor width adjustments */
+        }
+
+        .comment-card {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .comment-author {
+            font-weight: bold;
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+        }
+
+        .fade-out {
+            opacity: 1;
+            transition: opacity 1s ease-out;
+        }
+
+        .fade-out.hide {
+            opacity: 0;
+        }
+
+        textarea {
+            resize: none;
+        }
+
+        .badge {
+            font-size: 0.85rem;
+        }
+
+        .btn-outline-secondary,
+        .btn-sm {
+            transition: all 0.2s ease;
+        }
+
+        .btn-outline-secondary:hover {
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+
+<body>
+    {% for message in messages %}
+    <div style="margin-bottom: 0" class="alert alert-dismissible fade show alert-info">{{ message }}</div>
+    {% endfor %}
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'home' %}">Upflow</a>
+            <div class="d-flex align-items-center gap-2">
+                <a class="navbar-brand" href="{% url 'communities' %}">Communities</a>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                {% if user.is_authenticated %}
+                <span class="text-white fw-semibold">Hello, {{ user.username }}</span>
+                <form method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <button class="btn btn-outline-light btn-sm">Logout</button>
+                </form>
+                {% else %}
+                <button onclick="loadModal('login')" type="button" class="btn btn-outline-light btn-sm me-2">
+                    Log In
+                </button>
+
+                <button onclick="loadModal('signup')" type="button" class="btn btn-outline-light btn-sm me-2">
+                    Sign Up
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Wrapper to prevent width jump -->
+    <div class="post-wrapper mt-4">
+        <div class="post-container">
+            {% load post_tags %}
+            <div class="bg-white border rounded p-3 shadow-sm mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <h3 class="mb-0">{{ post.title }}</h3>
+                    <small class="text-muted">{{ post.created_at|date:"M d, Y H:i" }}</small>
+                </div>
+                <p class="text-muted mb-2">
+                    <a class="fw-bold" href="{% url 'communities' post.community.name %}">r/{{ post.community.name}}</a>
+                    • Posted by
+                    <a class="fw-bold" href="{% url 'profile' post.user.username %}">{{ post.user.username }}</a>
+                </p>
+                <p>{{ post.body }}</p>
+
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <span class="badge bg-secondary">Votes: {{ post.votes }}</span>
+                    <div class="d-flex gap-1">
+                        {% with post.votedby|get_vote:user.username as user_vote %}
+                        <form method="post" action="{% url 'vote_post' post.id 'up' %}">
+                            {% csrf_token %}
+                            {% if user_vote == "up" %}
+                            <button class="btn btn-sm btn-success" title="Upvoted">
+                                <i class="bi bi-arrow-up-circle-fill"></i>
+                            </button>
+                            {% else %}
+                            <button class="btn btn-sm btn-outline-secondary" title="Upvote">
+                                <i class="bi bi-arrow-up-circle"></i>
+                            </button>
+                            {% endif %}
+                        </form>
+                        <form method="post" action="{% url 'vote_post' post.id 'down' %}">
+                            {% csrf_token %}
+                            {% if user_vote == "down" %}
+                            <button class="btn btn-sm btn-danger" title="Downvoted">
+                                <i class="bi bi-arrow-down-circle-fill"></i>
+                            </button>
+                            {% else %}
+                            <button class="btn btn-sm btn-outline-secondary" title="Downvote">
+                                <i class="bi bi-arrow-down-circle"></i>
+                            </button>
+                            {% endif %}
+                        </form>
+                        {% endwith %}
+                        {% if user == post.user %}
+                        <form method="post" action="{% url 'delete_post' post.id %}">
+                            {% csrf_token %}
+                            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="mb-3">Add a Comment</h5>
+                    <form id="comment-form" method="post" action="{% url 'create_comment' post.id %}">
+                        {% csrf_token %}
+                        <textarea class="form-control mb-2" rows="3" placeholder="What are your thoughts?"
+                            name="content"></textarea>
+                        <button id="comment-btn" class="btn btn-primary btn-sm">Comment</button>
+                    </form>
+                </div>
+            </div>
+
+            <h5 class="mb-3">Comments</h5>
+            {% for comment in comments %}
+            {% render_comment comment %}
+            {% empty %}
+            <p class="text-muted">No comments yet. Be the first to comment!</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div id="modal-container"></div>
+
+    <script>
+        function loadModal(type) {
+            const scrollBarCompensation = window.innerWidth - document.body.offsetWidth;
+            document.body.style.width = `calc(100% - ${scrollBarCompensation}px)`;
+
+            let url = '/';
+            if (type === 'login') url += 'login';
+            else if (type === 'signup') url += 'signup';
+
+            fetch(url)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('modal-container').innerHTML = html;
+
+                    let modalId = type === 'login' ? 'loginModal' : 'signupModal';
+                    const modalEl = document.getElementById(modalId);
+                    if (modalEl) {
+                        const modal = new bootstrap.Modal(modalEl);
+                        modal.show();
+                        modalEl.addEventListener('hidden.bs.modal', () => {
+                            document.body.style.width = '';
+                        });
+                    }
+                })
+                .catch(error => console.log('Error loading modal:', error));
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const alerts = document.querySelectorAll('.alert');
+
+            alerts.forEach(function (alert) {
+                alert.classList.add('fade-out');
+                setTimeout(() => {
+                    alert.classList.add('hide');
+                    setTimeout(() => { alert.remove(); }, 1000);
+                }, 3000);
+            });
+        });
+        document.addEventListener("DOMContentLoaded", () => {
+            document.querySelectorAll("form").forEach(form => {
+                form.addEventListener("submit", () => {
+                    const btn = form.querySelector("button[type=submit]");
+                    if (btn) {
+                        btn.disabled = true;
+                        btn.innerText = "Submitting...";
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>

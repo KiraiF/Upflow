@@ -1,0 +1,9 @@
+{% load comment_tags %}
+
+<div class="comment-card mb-2">
+    <p class="mb-1">
+        <a class="comment-author" href="{% url 'profile' comment.user %}" >{{ comment.user }}</a>
+        <small class="text-muted"> • {{ comment.commented_at|timesince }} ago</small>
+    </p>
+    <p class="mb-0">{{ comment.content }}</p>
+</div>

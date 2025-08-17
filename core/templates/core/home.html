@@ -1,29 +1,243 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-  <title>Reddit Clone</title>
+  {% load post_tags %}
+  <meta charset="UTF-8">
+  <meta property="og:title" content="Upflow" />
+  <meta property="og:description" content="Personal project site." />
+  <meta property="og:image" content="https://images2.imgbox.com/1d/6e/4JVUhwiL_o.jpeg" />
+  <meta property="og:url" content="https://www.kiraico.shop/" />
+  <meta property="og:type" content="website" />
+
+  <!-- Twitter Card (used by Twitter, Telegram, etc.) -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Upflow" />
+  <meta name="twitter:description" content="Personal project site." />
+  <meta name="twitter:image" content="https://images2.imgbox.com/1d/6e/4JVUhwiL_o.jpeg" />
+  <title>Upflow</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+  <style>
+    body {
+      background-color: #f8f9fa;
+      overflow-y: scroll;
+      margin: 0;
+    }
+
+    .post-wrapper {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      padding: 0.5rem 0;
+      /* less vertical padding */
+      box-sizing: border-box;
+    }
+
+    .post-container {
+      max-width: 800px;
+      width: 100%;
+      background-color: #fff;
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      transition: all 0.2s ease;
+      margin-bottom: 0.5rem;
+      /* tighter gap */
+    }
+
+    .post-card {
+      border: 1px solid #dee2e6;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      background: white;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      margin-bottom: 1rem;
+    }
+
+    .post-actions form {
+      display: inline;
+    }
+
+    .navbar-brand {
+      font-weight: bold;
+    }
+
+    .fade-out {
+      opacity: 1;
+      transition: opacity 1s ease-out;
+    }
+
+    .fade-out.hide {
+      opacity: 0;
+    }
+
+    .btn-outline-secondary,
+    .btn-sm {
+      transition: all 0.2s ease;
+    }
+
+    .btn-outline-secondary:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-sm {
+      transition: all 0.2s ease;
+    }
+
+    .btn-sm:hover {
+      transform: translateY(-1px);
+    }
+
+    .community-card,
+    .post-card {
+      background: white;
+      border: 1px solid #dee2e6;
+      border-radius: 0.5rem;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      transition: transform 0.2s ease;
+    }
+
+    .community-card:hover,
+    .post-card:hover {
+      transform: translateY(-3px);
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .page-header .title-block h2 {
+      margin: 0;
+      line-height: 1.2;
+    }
+
+    .page-header .title-block p {
+      margin: 0;
+      color: #6c757d;
+    }
+
+    .page-header .btn {
+      margin: 0 !important;
+    }
+
+    /* prevent vertical nudge */
+    @media (max-width:576px) {
+      .page-header {
+        flex-wrap: wrap;
+      }
+
+      .page-header .cta {
+        width: 100%;
+        display: flex;
+        justify-content: flex-end;
+      }
+    }
+  </style>
 </head>
+
 <body>
-  <h1>Reddit Clone 🧠</h1>
-  <hr>
-  {% for post in posts %}
-    <div style="margin-bottom: 20px;">
-      <h2>{{ post.title }}</h2>
-      <p><strong>Community:</strong> {{ post.community.name }}</p>
-      <p><strong>Posted by:</strong> <a href="{% url 'profile' post.user.username %}">{{ post.user.username }}</a> on {{ post.created_at }}</p>
-      <p><strong>Body:</strong> {{ post.body }}</p>
-      <p><strong>Karma:</strong> {{ post.karma }}</p>
-      <form method="post" action="{% url 'upvote_post' post.id %}" style="display:inline;">
-            {% csrf_token %}
-            <button type="submit">⬆ Upvote</button>
-      </form>
-      <form method="post" action="{% url 'downvote_post' post.id %}" style="display:inline;">
-            {% csrf_token %}
-            <button type="submit">⬆ Downvote</button>
-      </form>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="{% url 'home' %}">Upflow</a>
+      <div class="d-flex align-items-center gap-2">
+        <a class="navbar-brand" href="{% url 'communities' %}">Communities</a>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        {% if user.is_authenticated %}
+        <span class="text-white fw-semibold">Hello, {{ user.username }}</span>
+        <form method="post" action="{% url 'logout' %}">
+          {% csrf_token %}
+          <button class="btn btn-outline-light btn-sm">Logout</button>
+        </form>
+        {% else %}
+        <button onclick="loadModal('login')" type="button" class="btn btn-outline-light btn-sm me-2">
+          Log In
+        </button>
+
+        <button onclick="loadModal('signup')" type="button" class="btn btn-outline-light btn-sm me-2">
+          Sign Up
+        </button>
+        {% endif %}
+      </div>
     </div>
-  {% empty %}
-    <p>No posts yet. 😢</p>
-  {% endfor %}
+  </nav>
+
+  <div class="container mt-4">
+    {% for message in messages %}
+    <div class="alert alert-dismissible fade show alert-info">{{ message }}</div>
+    {% endfor %}
+
+    <div class="page-header">
+      <div class="title-block">
+        <h2 class="mb-0">Top Posts</h2>
+        <p class="text-muted">From all communities</p>
+      </div>
+      <div class="cta">
+        <button onclick="loadModal('post')" type="button" class="btn btn-primary btn-sm">
+          + New Post
+        </button>
+      </div>
+    </div>
+    {% for post in posts %}
+    <div class="post-wrapper">
+      <div class="post-container">
+        {% render_post post %}
+      </div>
+    </div>
+    {% empty %}
+    <div class="text-center text-muted mt-5">
+      <h4>Nothing here yet...</h4>
+      <p>Why not be the first to <a href="javascript:void(0)" onclick="loadModal('post')"
+          class="text-decoration-none text-primary fw-semibold">
+          post
+        </a>?</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div id="modal-container"></div>
+  <script>
+    function loadModal(type) {
+      let url = '';
+      if (type === 'post') url = '../post/new';
+      else if (type === 'login') url = '../login';
+      else if (type === 'signup') url = '../signup';
+
+      fetch(url)
+        .then(response => response.text())
+        .then(html => {
+          document.getElementById('modal-container').innerHTML = html;
+
+          let modalId = type === 'post' ? 'createPostModal' : type === 'login' ? 'loginModal' : 'signupModal';
+          const modalEl = document.getElementById(modalId);
+          if (modalEl) {
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+          }
+        })
+        .catch(error => console.log('Error loading modal:', error));
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      const alerts = document.querySelectorAll('.alert');
+
+      alerts.forEach(function (alert) {
+        alert.classList.add('fade-out');
+        setTimeout(() => {
+          alert.classList.add('hide');
+          setTimeout(() => { alert.remove(); }, 1000);
+        }, 3000);
+      });
+    });
+  </script>
 </body>
+
 </html>
