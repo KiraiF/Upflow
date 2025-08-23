@@ -88,7 +88,11 @@ WSGI_APPLICATION = 'upflow.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 DATABASES = {
-    'default': dj_database_url.config(default=os.environ.get('DATABASE_URL'))
+    'default': dj_database_url.config(
+        default=os.environ.get('DATABASE_URL'),
+        conn_max_age=600,  # Optional: keeps DB connections alive for up to 10 minutes
+        ssl_require=True,   # Ensure SSL is enforced
+    )
 }
 # DATABASES = {
 #     'default': {
