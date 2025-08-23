@@ -13,6 +13,9 @@ import os
 import dj_database_url
 from pathlib import Path
 from decouple import config
+from dotenv import load_dotenv
+from urllib.parse import urlparse, parse_qsl
+load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 GOOGLE_CLIENT_ID = config('GOOGLE_CLIENT_ID')
@@ -87,12 +90,18 @@ WSGI_APPLICATION = 'upflow.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+tmpPostgres = urlparse(os.getenv("DATABASE_URL"))
+
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL'),
-        conn_max_age=600,  # Optional: keeps DB connections alive for up to 10 minutes
-        ssl_require=True,   # Ensure SSL is enforced
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': tmpPostgres.path.replace('/', ''),
+        'USER': tmpPostgres.username,
+        'PASSWORD': tmpPostgres.password,
+        'HOST': tmpPostgres.hostname,
+        'PORT': 5432,
+        'OPTIONS': dict(parse_qsl(tmpPostgres.query)),
+    }
 }
 # DATABASES = {
 #     'default': {
